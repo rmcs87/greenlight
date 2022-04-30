@@ -12,21 +12,22 @@ import (
 )
 
 const (
-	ScopeActivation = "activation"
+	ScopeActivation      = "activation"
+	ScopeAuthentications = "authentication"
 )
 
 type Token struct {
-	Plaintext string
-	Hash      []byte
-	UserId    int64
-	Expire    time.Time
-	Scope     string
+	Plaintext string    `json:"token"`
+	Hash      []byte    `json:"-"`
+	UserID    int64     `json:"-"`
+	Expiry    time.Time `json:"expiry"`
+	Scope     string    `json:"-"`
 }
 
 func generateToken(userID int64, ttl time.Duration, scope string) (*Token, error) {
 	token := &Token{
-		UserId: userID,
-		Expire: time.Now().Add(ttl),
+		UserID: userID,
+		Expiry: time.Now().Add(ttl),
 		Scope:  scope,
 	}
 	randomBytes := make([]byte, 16)
@@ -67,7 +68,7 @@ func (m TokenModel) Insert(token *Token) error {
 		INSERT INTO tokens (hash, user_id, expiry, scope)
 		VALUES ($1, $2, $3, $4)`
 
-	args := []interface{}{token.Hash, token.UserId, token.Expire, token.Scope}
+	args := []interface{}{token.Hash, token.UserID, token.Expiry, token.Scope}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
