@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/go-mail/mail/v2 v2.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
