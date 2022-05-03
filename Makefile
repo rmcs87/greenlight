@@ -77,3 +77,41 @@ vendor:
 	go mod verify
 	@echo 'Vendoring dependencies...'
 	go mod vendor
+
+# ==================================================================================== #
+# PRODUCTION
+# ==================================================================================== #
+production_host_ip = '167.99.55.63'
+
+.PHONY: production/tunnel9999
+production/tunnel9999:
+	ssh -L :9999:${production_host_ip}:4000 greenlight@${production_host_ip}
+## production/connect: connect to the production server
+.PHONY: production/connect
+production/connect:
+	ssh greenlight@${production_host_ip}
+
+## production/deploy/api: deploy the api to production
+.PHONY: production/deploy/api
+production/deploy/api:
+	rsync -rP --delete ./bin/linux_amd64/api ./migrations greenlight@${production_host_ip}:~
+	ssh -t greenlight@${production_host_ip} 'migrate -path ~/migrations -database $$GREENLIGHT_DB_DSN up'
+
+
+## production/configure/api.service: configure the production systemd api.service file
+.PHONY: production/configure/api.service
+production/configure/api.service:
+	rsync -P ./remote/production/api.service greenlight@${production_host_ip}:~
+	ssh -t greenlight@${production_host_ip} '\
+	sudo mv ~/api.service /etc/systemd/system/ \
+	&& sudo systemctl enable api \
+	&& sudo systemctl restart api \
+	'
+## production/configure/caddyfile: configure the production Caddyfile
+.PHONY: production/configure/caddyfile
+production/configure/caddyfile:
+	rsync -P ./remote/production/Caddyfile greenlight@${production_host_ip}:~
+	ssh -t greenlight@${production_host_ip} '\
+		sudo mv ~/Caddyfile /etc/caddy/ \
+		&& sudo systemctl reload caddy \
+	'
